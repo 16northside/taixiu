@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>White88 - Ứng dụng Game</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="container">
+                <h1 class="logo">
+                    <i class="fas fa-dice"></i>
+                    White88
+                </h1>
+                <nav class="nav">
+                    <!-- Nếu chưa đăng nhập -->
+                    <template v-if="!isAuthenticated">
+                        <button 
+                            v-for="tab in authTabs" 
+                            :key="tab.id"
+                            @click="activeTab = tab.id"
+                            :class="['nav-btn', { active: activeTab === tab.id }]"
+                        >
+                            <i :class="tab.icon"></i>
+                            {{ tab.name }}
+                        </button>
+                    </template>
+                    <!-- Nếu đã đăng nhập -->
+                    <template v-else>
+                        <!-- Tab Game -->
+                        <button 
+                            v-for="tab in gameTabs" 
+                            :key="tab.id"
+                            @click="activeTab = tab.id"
+                            :class="['nav-btn', { active: activeTab === tab.id }]"
+                        >
+                            <i :class="tab.icon"></i>
+                            {{ tab.name }}
+                        </button>
+                        
+                        <!-- Thông tin user -->
+                        <span class="nav-user">Chào mừng, <b>{{ userInfo.username }}</b></span>
+                        <span class="nav-balance">Số dư: <b>{{ userInfo.balance }}</b> đ</span>
+                        
+                        <!-- Menu cài đặt -->
+                        <div class="dropdown">
+                            <button class="nav-btn dropdown-btn">
+                                <i class="fas fa-cog"></i> Cài đặt
+                            </button>
+                            <div class="dropdown-content">
+                                <a href="#" @click.prevent="activeTab = 'account'">
+                                    <i class="fas fa-user"></i> Thông tin tài khoản
+                                </a>
+                                <a href="#" @click.prevent="activeTab = 'change_password'">
+                                    <i class="fas fa-key"></i> Đổi mật khẩu
+                                </a>
+                                <a href="#" @click.prevent="logout">
+                                    <i class="fas fa-sign-out-alt"></i> Đăng xuất
+                                </a>
+                            </div>
+                        </div>
+                    </template>
+                </nav>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main">
+            <div class="container">
+                <!-- Loading -->
+                <div v-if="loading" class="loading">
+                    <div class="spinner"></div>
+                    <p>Đang tải dữ liệu...</p>
+                </div>
+
+                <!-- Error -->
+                <div v-if="error" class="error">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <p>{{ error }}</p>
+                </div>
+
+                <!-- Trang chủ -->
+                <div v-if="activeTab === 'home'" class="tab-content">
+                    <div class="section">
+                        <h2><i class="fas fa-home"></i> Trang chủ</h2>
+                        <div class="welcome-section">
+                            <div class="welcome-card">
+                                <h3>Chào mừng đến với White88!</h3>
+                                <p>Nền tảng game giải trí hàng đầu với các trò chơi hấp dẫn:</p>
+                                <div class="game-highlights">
+                                    <div class="game-highlight">
+                                        <i class="fas fa-dice"></i>
+                                        <h4>Tài Xỉu</h4>
+                                        <p>Thử vận may với trò chơi Tài Xỉu</p>
+                                    </div>
+                                    <div class="game-highlight">
+                                        <i class="fas fa-futbol"></i>
+                                        <h4>Bóng Đá</h4>
+                                        <p>Theo dõi trận đấu và kết quả</p>
+                                    </div>
+                                    <div class="game-highlight">
+                                        <i class="fas fa-ticket-alt"></i>
+                                        <h4>Lô Đề</h4>
+                                        <p>Xem số và lịch sử kết quả</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Đăng nhập -->
+                <div v-if="activeTab === 'login'" class="tab-content">
+                    <div class="section">
+                        <h2><i class="fas fa-sign-in-alt"></i> Đăng nhập</h2>
+                        <form @submit.prevent="login" class="auth-form">
+                            <div class="form-group">
+                                <input v-model="loginForm.username" placeholder="Tên đăng nhập" required>
+                            </div>
+                            <div class="form-group">
+                                <input v-model="loginForm.password" type="password" placeholder="Mật khẩu" required>
+                            </div>
+                            <button type="submit" class="btn-primary">Đăng nhập</button>
+                        </form>
+                        <div v-if="loginError" class="error-message">{{ loginError }}</div>
+                    </div>
+                </div>
+
+                <!-- Đăng ký -->
+                <div v-if="activeTab === 'register'" class="tab-content">
+                    <div class="section">
+                        <h2><i class="fas fa-user-plus"></i> Đăng ký</h2>
+                        <form @submit.prevent="register" class="auth-form">
+                            <div class="form-group">
+                                <input v-model="registerForm.username" placeholder="Tên đăng nhập" required>
+                            </div>
+                            <div class="form-group">
+                                <input v-model="registerForm.email" type="email" placeholder="Email">
+                            </div>
+                            <div class="form-group">
+                                <input v-model="registerForm.password" type="password" placeholder="Mật khẩu" required>
+                            </div>
+                            <button type="submit" class="btn-primary">Đăng ký</button>
+                        </form>
+                        <div v-if="registerError" class="error-message">{{ registerError }}</div>
+                        <div v-if="registerSuccess" class="success-message">{{ registerSuccess }}</div>
+                    </div>
+                </div>
+
+                <!-- Thông tin tài khoản -->
+                <div v-if="activeTab === 'account'" class="tab-content">
+                    <div class="section">
+                        <h2><i class="fas fa-user"></i> Thông tin tài khoản</h2>
+                        <div class="account-info">
+                            <p><strong>Tên đăng nhập:</strong> {{ userInfo.username }}</p>
+                            <p><strong>Email:</strong> {{ userInfo.email }}</p>
+                            <p><strong>Số dư:</strong> {{ userInfo.balance }} đ</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Đổi mật khẩu -->
+                <div v-if="activeTab === 'change_password'" class="tab-content">
+                    <div class="section">
+                        <h2><i class="fas fa-key"></i> Đổi mật khẩu</h2>
+                        <form @submit.prevent="changePassword" class="auth-form">
+                            <div class="form-group">
+                                <input v-model="passwordForm.old_password" type="password" placeholder="Mật khẩu cũ" required>
+                            </div>
+                            <div class="form-group">
+                                <input v-model="passwordForm.new_password" type="password" placeholder="Mật khẩu mới" required>
+                            </div>
+                            <div class="form-group">
+                                <input v-model="passwordForm.confirm_password" type="password" placeholder="Xác nhận mật khẩu mới" required>
+                            </div>
+                            <button type="submit" class="btn-primary">Đổi mật khẩu</button>
+                        </form>
+                        <div v-if="passwordError" class="error-message">{{ passwordError }}</div>
+                        <div v-if="passwordSuccess" class="success-message">{{ passwordSuccess }}</div>
+                    </div>
+                </div>
+
+                <!-- Tài Xỉu Tab -->
+                <div v-if="activeTab === 'taixiu'" class="tab-content">
+                    <div class="section">
+                        <h2><i class="fas fa-dice"></i> Tài Xỉu</h2>
+                        <div class="game-info">
+                            <div class="info-card">
+                                <h3>Thông tin Game</h3>
+                                <div v-if="taixiuData.game" class="game-details">
+                                    <p><strong>Trạng thái:</strong> {{ taixiuData.game.status }}</p>
+                                    <p><strong>Thời gian:</strong> {{ taixiuData.game.time }}</p>
+                                    <p><strong>Kết quả:</strong> {{ taixiuData.game.result || 'Chưa có' }}</p>
+                                </div>
+                                <div v-else class="no-data">
+                                    <p>Không có thông tin game</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bóng Đá Tab -->
+                <div v-if="activeTab === 'bongda'" class="tab-content">
+                    <div class="section">
+                        <h2><i class="fas fa-futbol"></i> Bóng Đá</h2>
+                        
+                        <!-- Matches -->
+                        <div class="matches-section">
+                            <h3>Trận đấu sắp diễn ra</h3>
+                            <div class="matches-grid">
+                                <div v-for="match in bongdaData.matches" :key="match.id" class="match-card">
+                                    <div class="match-teams">
+                                        <div class="team home">
+                                            <span class="team-name">{{ match.home_team }}</span>
+                                        </div>
+                                        <div class="vs">VS</div>
+                                        <div class="team away">
+                                            <span class="team-name">{{ match.away_team }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="match-info">
+                                        <p class="match-date">{{ formatDate(match.date) }}</p>
+                                        <p class="match-time">{{ match.time }}</p>
+                                        <span class="match-status" :class="match.status">{{ getStatusText(match.status) }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Results -->
+                        <div class="results-section">
+                            <h3>Kết quả trận đấu</h3>
+                            <div class="results-grid">
+                                <div v-for="result in bongdaData.results" :key="result.id" class="result-card">
+                                    <div class="result-teams">
+                                        <div class="team home">
+                                            <span class="team-name">{{ result.home_team }}</span>
+                                            <span class="score">{{ result.home_score }}</span>
+                                        </div>
+                                        <div class="vs">-</div>
+                                        <div class="team away">
+                                            <span class="score">{{ result.away_score }}</span>
+                                            <span class="team-name">{{ result.away_team }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="result-info">
+                                        <p class="result-date">{{ formatDate(result.date) }}</p>
+                                        <span class="result-status">{{ getStatusText(result.status) }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lô Đề Tab -->
+                <div v-if="activeTab === 'lode'" class="tab-content">
+                    <div class="section">
+                        <h2><i class="fas fa-ticket-alt"></i> Lô Đề</h2>
+                        
+                        <!-- Current Numbers -->
+                        <div class="numbers-section">
+                            <h3>Số hiện tại</h3>
+                            <div v-if="lodeData.numbers" class="current-numbers">
+                                <div class="numbers-grid">
+                                    <div v-for="(number, index) in lodeData.numbers.current_numbers" :key="index" class="number-item">
+                                        {{ number.toString().padStart(2, '0') }}
+                                    </div>
+                                </div>
+                                <div class="number-info">
+                                    <p><strong>Ngày:</strong> {{ lodeData.numbers.date }}</p>
+                                    <p><strong>Miền:</strong> {{ lodeData.numbers.region }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- History -->
+                        <div class="history-section">
+                            <h3>Lịch sử kết quả</h3>
+                            <div class="history-list">
+                                <div v-for="(item, index) in lodeData.history" :key="index" class="history-item">
+                                    <div class="history-header">
+                                        <span class="history-date">{{ formatDate(item.date) }}</span>
+                                        <span class="history-region">{{ item.region }}</span>
+                                    </div>
+                                    <div class="history-numbers">
+                                        <span v-for="(num, numIndex) in item.numbers" :key="numIndex" class="history-number">
+                                            {{ num.toString().padStart(2, '0') }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="container">
+                <p>&copy; 2024 White88. Tất cả quyền được bảo lưu.</p>
+            </div>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html> 

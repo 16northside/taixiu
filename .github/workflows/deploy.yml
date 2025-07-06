@@ -1,0 +1,92 @@
+name: Deploy to Production
+
+on:
+  workflow_run:
+    workflows: ["Backend CI/CD", "Frontend CI/CD"]
+    types:
+      - completed
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download backend artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: backend-build
+          path: ./backend-artifacts
+
+      - name: Download frontend artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: frontend-build
+          path: ./frontend-artifacts
+
+      # Deploy to VPS/Server (SSH)
+      - name: Deploy to server
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.PORT }}
+          script: |
+            # Backup current deployment
+            sudo cp -r /var/www/white88 /var/www/white88_backup_$(date +%Y%m%d_%H%M%S) || true
+
+            # Stop services
+            sudo systemctl stop white88-backend || true
+            sudo systemctl stop white88-frontend || true
+
+            # Update backend
+            cd /var/www/white88
+            git pull origin main
+            source venv/bin/activate
+            pip install -r requirements.txt
+            python manage.py migrate
+            python manage.py collectstatic --noinput
+
+            # Update frontend
+            cd /var/www/white88/frontend
+            npm install
+            npm run build
+
+            # Restart services
+            sudo systemctl start white88-backend
+            sudo systemctl start white88-frontend
+
+            # Health check
+            sleep 10
+            curl -f http://localhost:8000/api/health/ || exit 1
+            curl -f http://localhost:3000/ || exit 1
+
+      # Alternative: Deploy to Heroku
+      # - name: Deploy to Heroku
+      #   uses: akhileshns/heroku-deploy@v3.12.14
+      #   with:
+      #     heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+      #     heroku_app_name: ${{ secrets.HEROKU_APP_NAME }}
+      #     heroku_email: ${{ secrets.HEROKU_EMAIL }}
+
+      # Alternative: Deploy to Railway
+      # - name: Deploy to Railway
+      #   uses: railway/deploy@v1.0.0
+      #   with:
+      #     railway_token: ${{ secrets.RAILWAY_TOKEN }}
+      #     service: ${{ secrets.RAILWAY_SERVICE }}
+
+      - name: Notify deployment status
+        if: always()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          channel: "#deployments"
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
