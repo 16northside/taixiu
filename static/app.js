@@ -38,15 +38,7 @@ createApp({
             // Game data
             taixiuData: { game: null },
             bongdaData: { matches: [], results: [] },
-            lodeData: { numbers: null, history: [] },
-            
-            betForm: {
-                numbers: '',
-                bet_type: 'bao_lo',
-                amount: ''
-            },
-            betResult: '',
-            betError: '',
+            lodeData: { numbers: null, history: [] }
         }
     },
     
@@ -283,23 +275,6 @@ createApp({
             }
         },
         
-        async placeBet() {
-            this.betResult = '';
-            this.betError = '';
-            try {
-                const res = await axios.post('/lode/place-bet/', this.betForm);
-                if (res.data.success) {
-                    this.betResult = 'Đặt cược thành công!';
-                    this.betForm.numbers = '';
-                    this.betForm.amount = '';
-                } else {
-                    this.betError = 'Có lỗi xảy ra!';
-                }
-            } catch (err) {
-                this.betError = err.response?.data?.numbers?.[0] || 'Có lỗi xảy ra!';
-            }
-        },
-        
         // Utility methods
         formatDate(dateString) {
             const date = new Date(dateString);
@@ -316,11 +291,6 @@ createApp({
                 'cancelled': 'Đã hủy'
             };
             return statusMap[status] || status;
-        },
-
-        handleTabClick(tabId) {
-            console.log('Chuyển tab:', tabId);
-            this.activeTab = tabId;
         }
     },
     

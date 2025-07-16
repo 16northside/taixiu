@@ -1,11 +1,11 @@
-from django.http import JsonResponse
+from django.shortcuts import render
+from django.http import HttpResponse
+import os
 
 def home(request):
-    return JsonResponse({
-        "message": "Chào mừng đến với White88 API!",
-        "api_endpoints": [
-            "/api/taixiu/",
-            "/api/bongda/",
-            "/api/lode/"
-        ]
-    }) 
+    """Serve giao diện người dùng chính"""
+    return render(request, 'index.html')
+
+def admin_panel(request):
+    """Serve trang admin panel"""
+    return render(request, 'admin.html') 

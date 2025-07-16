@@ -3,6 +3,9 @@ from django.http import JsonResponse
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 import random
+from rest_framework.views import APIView
+from rest_framework import status
+from .serializers import BetSerializer
 
 # Create your views here.
 
@@ -52,3 +55,11 @@ def history(request):
         'success': True,
         'data': history_data
     })
+
+class PlaceBetView(APIView):
+    def post(self, request):
+        serializer = BetSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'success': True, 'bet': serializer.data}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>White88 - API Server</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .container {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        padding: 40px;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        text-align: center;
+        max-width: 600px;
+      }
+      h1 {
+        color: #333;
+        margin-bottom: 20px;
+      }
+      p {
+        color: #666;
+        margin-bottom: 30px;
+      }
+      .btn {
+        display: inline-block;
+        padding: 12px 25px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: transform 0.3s ease;
+      }
+      .btn:hover {
+        transform: translateY(-2px);
+      }
+      .api-list {
+        text-align: left;
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        margin-top: 20px;
+      }
+      .api-list h3 {
+        color: #333;
+        margin-bottom: 10px;
+      }
+      .api-list ul {
+        list-style: none;
+        padding: 0;
+      }
+      .api-list li {
+        padding: 5px 0;
+        color: #666;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🚀 White88 API Server</h1>
+      <p>Chào mừng đến với hệ thống API của White88!</p>
+
+      <a href="/admin-panel/" class="btn">🔧 Admin Panel</a>
+
+      <div class="api-list">
+        <h3>📡 API Endpoints:</h3>
+        <ul>
+          <li>• /api/taixiu/ - API Tài Xỉu</li>
+          <li>• /api/bongda/ - API Bóng Đá</li>
+          <li>• /api/lode/ - API Lô Đề</li>
+          <li>• /api/users/ - API Users</li>
+        </ul>
+      </div>
+    </div>
+  </body>
+</html>
